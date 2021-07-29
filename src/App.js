@@ -4,7 +4,7 @@ import Searchbar from "./components/Searchbar/Searchbar";
 import ImageGallery from "./components/ImageGallery/ImageGallery";
 import Modal from "./components/Modal/Modal";
 import Button from "./components/Button/Button";
-import Loader from "react-loader-spinner";
+import Loader from "./components/Loader/Loader";
 import "./App.css";
 
 class App extends Component {
@@ -17,14 +17,33 @@ class App extends Component {
     loading: false,
   };
 
+  constructor(props) {
+    super(props);
+    this.galleryRef = React.createRef();
+  }
+
   componentDidMount() {
     this.getImages();
   }
 
-  componentDidUpdate(prevProps, prevState) {
-    if (this.state.data !== prevState.data) {
+  getSnapshotBeforeUpdate() {
+    if (this.galleryRef && this.galleryRef.current) {
+      return (
+        this.galleryRef.current.offsetTop +
+        this.galleryRef.current.scrollHeight -
+        70
+      );
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if (
+      this.state.data !== prevState.data &&
+      this.state.page !== 1 &&
+      snapshot
+    ) {
       window.scrollTo({
-        top: document.documentElement.scrollHeight,
+        top: snapshot,
         behavior: "smooth",
       });
     }
@@ -38,7 +57,6 @@ class App extends Component {
       );
       this.setState({
         data: [...this.state.data, ...response.data.hits],
-        page: this.state.query ? 1 : this.state.page,
         loading: false,
       });
     } catch (error) {
@@ -47,14 +65,16 @@ class App extends Component {
   };
 
   searchImages = (keyword) => {
-    console.log(keyword);
     if (keyword) {
-      return this.setState({ query: keyword, data: [] }, this.getImages);
+      return this.setState(
+        { query: keyword, data: [], page: 1 },
+        this.getImages
+      );
     }
   };
 
   loadMoreImages = () => {
-    this.setState({ page: this.state.page + 1 }, this.getImages);
+    this.setState(({ page }) => ({ page: page + 1 }), this.getImages);
   };
 
   openModal = (e) => {
@@ -73,19 +93,25 @@ class App extends Component {
 
   render() {
     const { data, showModal, activeImageId, loading } = this.state;
-    const searchImages = this.searchImages;
-    const loadMoreImages = this.loadMoreImages;
-    const openModal = this.openModal;
-    const closeModal = this.closeModal;
 
     return (
       <>
-        <Searchbar onSubmit={searchImages} />
-        {data ? <ImageGallery images={data} onClick={openModal} /> : null}
+        <Searchbar onSubmit={this.searchImages} />
+        {data ? (
+          <ImageGallery
+            innerRef={this.galleryRef}
+            images={data}
+            onClick={this.openModal}
+          />
+        ) : null}
         {showModal && (
-          <Modal images={data} imgId={activeImageId} onClick={closeModal} />
+          <Modal
+            images={data}
+            imgId={activeImageId}
+            closeModal={this.closeModal}
+          />
         )}
-        {loading ? <Loader /> : <Button onClick={loadMoreImages} />}
+        {loading ? <Loader /> : <Button onClick={this.loadMoreImages} />}
       </>
     );
   }
