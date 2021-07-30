@@ -18,18 +18,12 @@ class Modal extends React.Component {
   };
 
   render() {
-    const { images, imgId, closeModal } = this.props;
-    const imageId = images.find((image) => {
-      return +image.id === +imgId;
-    });
+    const { imageUrl, closeModal } = this.props;
+
     return (
       <div className={styles.Overlay} onClick={closeModal}>
         <div className={styles.Modal}>
-          <img
-            className={styles.ModalImage}
-            src={imageId.largeImageURL}
-            alt=""
-          />
+          <img className={styles.ModalImage} src={imageUrl} alt="" />
         </div>
       </div>
     );

@@ -93,6 +93,9 @@ class App extends Component {
 
   render() {
     const { data, showModal, activeImageId, loading } = this.state;
+    const imageId = data.find((item) => {
+      return +item.id === +activeImageId;
+    });
 
     return (
       <>
@@ -104,10 +107,9 @@ class App extends Component {
             onClick={this.openModal}
           />
         ) : null}
-        {showModal && (
+        {showModal && imageId && (
           <Modal
-            images={data}
-            imgId={activeImageId}
+            imageUrl={imageId.largeImageURL}
             closeModal={this.closeModal}
           />
         )}
